@@ -76,6 +76,15 @@ Defaults:tunnel env_keep += dev
 cat /etc/sudoers.d/vpn_unpriv
 
 ## not required on Whonix-Gateway
+## would break Whonix-Gateway
+## The VPN will be connected first. Tor runs on top of it.
+## Whonix-Gateway has no system DNS.
+## Therefore, apt-get etc. still need to talk to a Tor SocksPort.
+#echo "
+#uwtwrapper_global=0
+#" > /etc/uwt.d/50_vpn.conf
+
+## not required on Whonix-Gateway
 #apt-get --yes install unzip
 
 ## not required on Whonix-Gateway
