@@ -107,7 +107,9 @@ Defaults:tunnel env_keep += dev
 
 cat /etc/sudoers.d/vpn_unpriv
 
-apt-get --yes install resolvconf unzip aptitude
+apt-get --yes install unzip aptitude
+
+apt-get --yes install resolvconf
 
 aptitude keep-all
 
@@ -117,8 +119,8 @@ d       /run/resolvconf                   0775    root      tunnel    -       -
 d       /run/resolvconf/interface         0775    root      tunnel    -       -
 " > /usr/lib/tmpfiles.d/50_openvpn_unpriv.conf
 
+mkdir -p /run/resolvconf
 chown --recursive root:tunnel /run/resolvconf
-
 chmod --recursive 775 /run/resolvconf
 
 chown -R tunnel:tunnel /etc/openvpn

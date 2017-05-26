@@ -75,9 +75,37 @@ Defaults:tunnel env_keep += dev
 
 cat /etc/sudoers.d/vpn_unpriv
 
+## not required on Whonix-Gateway
+#apt-get --yes install unzip
+
+## not required on Whonix-Gateway
+#apt-get --yes install aptitude
+
+## not required on Whonix-Gateway
+#apt-get --yes install resolvconf
+
+## not required on Whonix-Gateway
+#aptitude keep-all
+
+echo "
+d       /run/openvpn                      0755    tunnel    tunnel    -       -
+d       /run/resolvconf                   0775    root      tunnel    -       -
+d       /run/resolvconf/interface         0775    root      tunnel    -       -
+" > /usr/lib/tmpfiles.d/50_openvpn_unpriv.conf
+
+## not required for Whonix-Gateway, just for cosistency with partner script.
+mkdir -p /run/resolvconf
+chown --recursive root:tunnel /run/resolvconf
+chmod --recursive 775 /run/resolvconf
+
 chown -R tunnel:tunnel /etc/openvpn
 
 chown -R tunnel:tunnel /var/run/openvpn
+
+chmod -R g-r /etc/openvpn
+chmod -R o-r /etc/openvpn
+chmod -R g-w /etc/openvpn
+chmod -R o-w /etc/openvpn
 
 cp /lib/systemd/system/openvpn@.service /lib/systemd/system/openvpn@openvpn.service
 
@@ -86,6 +114,12 @@ systemctl enable openvpn@openvpn
 systemctl restart openvpn@openvpn
 
 systemctl status openvpn@openvpn
+
+## Not required on Whonix-Gateway.
+
+#systemctl restart resolvconf
+
+#systemctl status resolvconf
 
 echo '
 whonixcheck_skip_functions+=" check_tor_bootstrap "
