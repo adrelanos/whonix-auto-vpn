@@ -1,0 +1,196 @@
+#!/bin/bash
+
+## keep this script comments intact
+
+## preparation...
+
+## 1) task: Install Tor Browser.
+
+## 2) task: get /etc/openvpn/auth.txt into place
+##
+## kdesudo kwrite /etc/openvpn/auth.txt
+##
+## add
+##
+## user
+## password
+##
+## Make sure there are no extra spaces.
+##
+## Save.
+
+## 3) task: get VPN settings file openvpn-ip-tcp.zip into place:
+##
+## sudo su
+## cd /etc/openvpn
+## scurl --remote-name "https://www.privateinternetaccess.com/openvpn/openvpn-ip-tcp.zip"
+
+set -x
+set -e
+
+if [ ! "$(id -u)" == "0" ]; then
+   true "ERROR: Must run as root! sudo $0"
+   exit 1
+fi
+
+if [ ! -f /etc/openvpn/auth.txt ]; then
+   true "ERROR: /etc/openvpn/auth.txt does not exist!"
+   exit 2
+fi
+
+if [ ! -f /etc/openvpn/openvpn-ip-tcp.zip ]; then
+   true "ERROR: /etc/openvpn/openvpn-ip-tcp.zip  does not exist!"
+   exit 3
+fi
+
+## Prevent Qubes update check from interfering with apt-get.
+## (Since it would lock apt-get and the use of apt-get would fail.)
+systemctl stop qubes-update-check.timer >/dev/null 2>&1 || true
+systemctl stop qubes-update-check >/dev/null 2>&1 || true
+
+if ! dpkg -l | grep resolvconf ; then
+   apt-get update
+fi
+
+pushd /etc/openvpn
+
+unzip -o openvpn-ip-tcp.zip
+
+for file_name in ./*.ovpn ; do
+   true "file_name: $file_name"
+
+   one='proto udp'
+   two='proto tcp'
+   sed -i "s#$one#$two#g" "$file_name"
+
+   one='dev tun'
+   two='dev tun0'
+   sed -i "s#$one#$two#g" "$file_name"
+
+   if ! grep "auth-user-pass auth.txt" /etc/resolv.conf ; then
+      one='auth-user-pass'
+      two='auth-user-pass auth.txt'
+      sed -i "s#$one#$two#g" "$file_name"
+   fi
+
+  if ! grep "script-security 2" "$file_name" ; then
+    echo 'script-security 2' >> "$file_name"
+  fi
+
+  if ! grep "up /etc/openvpn/update-resolv-conf" "$file_name" ; then
+    echo 'up /etc/openvpn/update-resolv-conf' >> "$file_name"
+  fi
+
+  if ! grep "down /etc/openvpn/update-resolv-conf" "$file_name" ; then
+    echo 'down /etc/openvpn/update-resolv-conf' >> "$file_name"
+  fi
+
+  if ! grep "user tunnel" "$file_name" ; then
+    echo "user tunnel" >> "$file_name"
+  fi
+
+  if ! grep "iproute /usr/bin/ip_unpriv" "$file_name" ; then
+    echo "iproute /usr/bin/ip_unpriv" >> "$file_name"
+  fi
+done
+
+## IP specific
+cp "/etc/openvpn/UK London.ovpn" /etc/openvpn/openvpn.conf
+
+echo "
+tunnel ALL=(ALL) NOPASSWD: /bin/ip
+tunnel ALL=(ALL) NOPASSWD: /usr/sbin/openvpn *
+Defaults:tunnel !requiretty
+Defaults:tunnel env_keep += script_type
+Defaults:tunnel env_keep += dev
+" > /etc/sudoers.d/vpn_unpriv
+
+cat /etc/sudoers.d/vpn_unpriv
+
+apt-get --yes install resolvconf unzip aptitude
+
+aptitude keep-all
+
+echo "
+d       /run/openvpn                      0755    tunnel    tunnel    -       -
+d       /run/resolvconf                   0775    root      tunnel    -       -
+d       /run/resolvconf/interface         0775    root      tunnel    -       -
+" > /usr/lib/tmpfiles.d/50_openvpn_unpriv.conf
+
+chown --recursive root:tunnel /run/resolvconf
+
+chmod --recursive 775 /run/resolvconf
+
+chown -R tunnel:tunnel /etc/openvpn
+
+chown -R tunnel:tunnel /var/run/openvpn
+
+chmod -R g-r /etc/openvpn
+chmod -R o-r /etc/openvpn
+chmod -R g-w /etc/openvpn
+chmod -R o-w /etc/openvpn
+
+cp /lib/systemd/system/openvpn@.service /lib/systemd/system/openvpn@openvpn.service
+
+systemctl enable openvpn@openvpn
+
+systemctl restart openvpn@openvpn
+
+systemctl status openvpn@openvpn
+
+systemctl restart resolvconf
+
+systemctl status resolvconf
+
+cat /etc/resolv.conf
+
+## Non-Qubes-Whonix specific.
+if grep "10.152.152." /etc/resolv.conf ; then
+   true "ERROR: DNS config."
+   exit 4
+fi
+
+if ! grep "TOR_TRANSPROXY=1" /etc/environment ; then
+   echo "
+TOR_TRANSPROXY=1
+" >> /etc/environment
+fi
+
+echo '
+whonixcheck_skip_functions+=" check_tor_bootstrap "
+whonixcheck_skip_functions+=" check_tor_socks_port_reachability "
+whonixcheck_skip_functions+=" check_tor_socks_port "
+#whonixcheck_skip_functions+=" check_tor_trans_port "
+whonixcheck_skip_functions+=" check_stream_isolation "
+whonixcheck_skip_functions+=" download_whonix_news "
+
+## {{ Alternative to disabling check_tor_trans_port.
+
+## Make the Tor TransPort test work by simulating the Tor SocksPort test succeeded.
+CHECK_TOR_RESULT_SOCKS_PORT=0
+
+## Do not warn if Tor was not detected. (Will be the VPN.)
+WHONIXCHECK_NO_EXIT_ON_TRANS_PORT_DETECTION_FAILURE=1
+
+## }}
+
+## {{ Alternative to download_whonix_news.
+
+## Download news through system default.
+#CURL_PROXY_WHONIX_NEWS="--fail"
+
+## }}
+' > /etc/whonix.d/50_vpn.conf
+
+mkdir -p /etc/whonix_firewall.d
+
+echo "
+WORKSTATION_FIREWALL=1
+TUNNEL_FIREWALL_ENABLE=true
+" > /etc/whonix_firewall.d/50_vpn.conf
+
+cat /etc/whonix_firewall.d/50_vpn.conf
+
+whonix_firewall
+
+true "INFO: Success!"
