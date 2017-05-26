@@ -1,6 +1,6 @@
 #!/bin/bash
 
-## keep this script comments intact
+## keep these script comments intact
 
 ## preparation...
 
@@ -107,11 +107,20 @@ Defaults:tunnel env_keep += dev
 
 cat /etc/sudoers.d/vpn_unpriv
 
+mkdir -p /etc/uwt.d
+
 ## Required on Whonix-Gateway so apt-get etc. will return to be using system default
 ## networking. Otherwise, it would be blocked by the Whonix-Gateway firewall.
 echo "
 uwtwrapper_global=0
 " > /etc/uwt.d/50_vpn.conf
+
+mkdir -p /etc/torbrowser.d
+
+echo '
+TB_NO_TOR_CON_CHECK=1
+CURL_PROXY="--fail"
+' > /etc/torbrowser.d/50_vpn.conf
 
 apt-get --yes install unzip aptitude
 

@@ -1,5 +1,13 @@
 #!/bin/bash
 
+## keep these script comments intact
+
+## preparation...
+
+## 1) task: get VPN settings file mullvadconfig_se.zip into place:
+##
+## sudo cp /etc/openvpn/mullvadconfig_se.zip /etc/openvpn/mullvadconfig_se.zip
+
 set -x
 set -e
 
@@ -12,6 +20,11 @@ if [ ! -f /etc/openvpn/mullvadconfig_se.zip ]; then
    true "ERROR: file /etc/openvpn/mullvadconfig_se.zip missing!"
    exit 2
 fi
+
+## Prevent Qubes update check from interfering with apt-get.
+## (Since it would lock apt-get and the use of apt-get would fail.)
+systemctl stop qubes-update-check.timer >/dev/null 2>&1 || true
+systemctl stop qubes-update-check >/dev/null 2>&1 || true
 
 pushd /etc/openvpn
 
@@ -75,6 +88,8 @@ Defaults:tunnel env_keep += dev
 
 cat /etc/sudoers.d/vpn_unpriv
 
+mkdir -p /etc/uwt.d
+
 ## not required on Whonix-Gateway
 ## would break Whonix-Gateway
 ## The VPN will be connected first. Tor runs on top of it.
@@ -83,6 +98,14 @@ cat /etc/sudoers.d/vpn_unpriv
 #echo "
 #uwtwrapper_global=0
 #" > /etc/uwt.d/50_vpn.conf
+
+## not required on Whonix-Gateway
+#mkdir -p /etc/torbrowser.d
+
+#echo '
+#TB_NO_TOR_CON_CHECK=1
+#CURL_PROXY="--fail"
+#' > /etc/torbrowser.d/50_vpn.conf
 
 ## not required on Whonix-Gateway
 #apt-get --yes install unzip
