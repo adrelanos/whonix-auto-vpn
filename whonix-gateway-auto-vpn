@@ -78,6 +78,10 @@ if ! grep "iproute /usr/bin/ip_unpriv" openvpn.conf ; then
    echo "iproute /usr/bin/ip_unpriv" >> openvpn.conf
 fi
 
+if ! grep "keepalive 5 15" "$file_name" ; then
+   echo "keepalive 5 15" >> "$file_name"
+fi
+
 echo "
 tunnel ALL=(ALL) NOPASSWD: /bin/ip
 tunnel ALL=(ALL) NOPASSWD: /usr/sbin/openvpn *

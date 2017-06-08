@@ -92,6 +92,10 @@ for file_name in ./*.ovpn ; do
   if ! grep "iproute /usr/bin/ip_unpriv" "$file_name" ; then
     echo "iproute /usr/bin/ip_unpriv" >> "$file_name"
   fi
+
+  if ! grep "keepalive 5 15" "$file_name" ; then
+    echo "keepalive 5 15" >> "$file_name"
+  fi
 done
 
 ## IP specific
