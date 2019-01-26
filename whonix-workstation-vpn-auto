@@ -119,7 +119,6 @@ yo37GFU+q1WPCplVZgCP9hC8Rn5K2+f6KLFo5bhtowSmu+GY1yZtg+RTtsA=
 </crl-verify>'
    perl -i -pe "s#$one#$two#g;" "$file_name"
 
-
    one='<ca>
 -----BEGIN CERTIFICATE-----
 MIIFqzCCBJOgAwIBAgIJAKZ7D5Yv87qDMA0GCSqGSIb3DQEBDQUAMIHoMQswCQYD
