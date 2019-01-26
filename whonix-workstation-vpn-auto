@@ -4,6 +4,14 @@
 
 ## preparation...
 
+## store this script in /home/user/whonix-workstation-vpn-auto
+##    kwrite /home/user/whonix-workstation-vpn-auto
+## make it executable
+##    chmod +x /home/user/whonix-workstation-vpn-auto
+
+## task: Check that Tor connection is fully functional.
+## whonixcheck
+
 ## task: update APT package lists
 ## sudo apt-get update
 
@@ -32,6 +40,9 @@
 ##
 ## Make sure there are no extra spaces.
 ## Save.
+
+## task: run whonix-workstation-vpn-auto script
+##    sudo /home/user/whonix-workstation-vpn-auto
 
 set -x
 set -e
@@ -153,6 +164,10 @@ systemctl --no-pager restart resolvconf
 
 systemctl --no-pager status resolvconf
 
+## Sanity test.
+## OpenVPN might not be fully initialized yet, so might not have called the
+## /etc/openvpn/update-resolv-conf script. So /etc/resolv.conf is likely to be
+## existing but empty.
 cat /etc/resolv.conf
 
 ## Non-Qubes-Whonix specific.
