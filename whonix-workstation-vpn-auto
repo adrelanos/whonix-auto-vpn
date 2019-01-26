@@ -4,6 +4,13 @@
 
 ## preparation...
 
+## task: update APT package lists
+## sudo apt-get update
+
+## task: install aptitude
+## sudo apt-get install aptitude
+
+## task: get VPN config file
 ## a) go to https://www.privateinternetaccess.com/pages/ovpn-config-generator
 ## b) select country
 ## c) choose:
@@ -13,25 +20,17 @@
 ## d) check 'Use IP'
 ## e) click generate
 ## f) store as /etc/openvpn/openvpn.conf
+##    kdesudo kwrite /etc/openvpn/openvpn.conf
 
-## sudo apt-get update
-
-## 1) task: install aptitude
-## sudo apt-get install aptitude
-
-## 2) task: install Tor Browser
-
-## 3) task: get /etc/openvpn/auth.txt into place
+## task: get /etc/openvpn/auth.txt into place
 ##
 ## kdesudo kwrite /etc/openvpn/auth.txt
-##
-## add
+## Add:
 ##
 ## user
 ## password
 ##
 ## Make sure there are no extra spaces.
-##
 ## Save.
 
 set -x
